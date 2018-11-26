@@ -92,6 +92,7 @@ var minifyJS = function() {
     .pipe(gulp.dest("dist"));
 };
 
+
 gulp.task("clean-dist", function() {
   return gulp.src("dist/*", { read: false }).pipe(clean());
 });
@@ -102,6 +103,17 @@ gulp.task("bundle", function() {
   processSass();
   minifyJS();
 });
+
+gulp.task('jsonModify', function () {
+ 
+  return gulp.src([ './js/vendor/firebaseInitialization.js' ])
+    .pipe(tasks.jsonModify({
+      key: 'apiKey',
+      value: 'abcdefg'
+    }))
+    .pipe(gulp.dest('./js/vendor/firebaseInitialization.js'))
+ 
+})
 
 gulp.task("watch", function(cb) {
   watch("dist/*", notifyLiveReload);
@@ -158,7 +170,7 @@ gulp.task("copy", function() {
   buildHTML();
 });
 
-gulp.task("default", ["bundle", "copy", "express", "livereload", "watch"]);
+gulp.task("default", ["bundle", "jsonModify", "copy", "express", "livereload", "watch"]);
 gulp.task("test", ["lint", "watch-test"]);
 gulp.task("testci", ["lint", "test-once"]);
 gulp.task("build", ["clean-dist", "bundle", "copy"]);
