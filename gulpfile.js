@@ -12,6 +12,9 @@ var gulp = require("gulp"),
   express = require("express"),
   path = require("path"),
   watch = require("gulp-watch"),
+  template = require("gulp-template"),
+  rename = require("gulp-rename"),
+  minimist = require('minimist'),
   autoprefixer = require("gulp-autoprefixer");
 
 gulp.task("express", function() {
@@ -25,6 +28,21 @@ gulp.task("express", function() {
 });
 
 var tinylr;
+
+var knownOptions = {
+  string: [
+      "key",
+      "project",
+      "message"
+  ],
+  default: {
+    key: process.env.FIREBASE_KEY  || 'test123',
+    project: process.env.FIREBASE_PROJECT || 'testABC',
+    message: process.env.FIREBASE_MESSAGE_ID || 'testDEF'
+  }
+};
+
+var options = minimist(process.argv.slice(2), knownOptions);
 
 function notifyLiveReload(event) {
   tinylr.changed({ body: { files: [path.relative(__dirname, event.path)] } });
@@ -104,15 +122,18 @@ gulp.task("bundle", function() {
   minifyJS();
 });
 
-gulp.task('jsonModify', function () {
- 
-  return gulp.src([ './js/vendor/firebaseInitialization.js' ])
-    .pipe(tasks.jsonModify({
-      key: 'apiKey',
-      value: 'abcdefg'
-    }))
-    .pipe(gulp.dest('./js/vendor/firebaseInitialization.js'))
- 
+gulp.task("firebase-config", function () {
+  return gulp.src("./js/config.tmpl.js")
+    .pipe(template(
+      {config: JSON.stringify(
+        {apiKey: options.key, 
+         authDomain: options.project + '.firebaseapp.com',
+         databaseURL: 'https://' + options.project + '.firebaseio.com',
+         projectId: options.project,
+         storageBucket: options.project + '.appspot.com',
+         messagingSenderId: options.message})}))
+    .pipe(rename("config.js"))
+    .pipe(gulp.dest("./js/"))
 })
 
 gulp.task("watch", function(cb) {
@@ -170,7 +191,7 @@ gulp.task("copy", function() {
   buildHTML();
 });
 
-gulp.task("default", ["bundle", "jsonModify", "copy", "express", "livereload", "watch"]);
+gulp.task("default", ["firebase-config", "bundle", "copy", "express", "livereload", "watch"]);
 gulp.task("test", ["lint", "watch-test"]);
 gulp.task("testci", ["lint", "test-once"]);
 gulp.task("build", ["clean-dist", "bundle", "copy"]);
