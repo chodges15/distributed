@@ -123,7 +123,7 @@ gulp.task("bundle", function() {
 });
 
 gulp.task("firebase-config", function () {
-  return gulp.src("./js/config.tmpl.js")
+  return gulp.src("./config.tmpl.js")
     .pipe(template(
       {config: JSON.stringify(
         {apiKey: options.key, 
